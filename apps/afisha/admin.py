@@ -24,5 +24,8 @@ class EventAdmin(admin.ModelAdmin):
     list_filter = ("type",)
     empty_value_display = "-пусто-"
 
+    class Media:
+        js = ("admin/afisha/js/ChoiceEvent.js",)
+
 
 admin.site.register(Event, EventAdmin)

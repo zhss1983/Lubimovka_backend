@@ -1,3 +1,3 @@
-from .event import EventsAPIView
+from .event import EventsAPIView, GetCommonEventList
 
-__all__ = (EventsAPIView,)
+__all__ = (EventsAPIView, GetCommonEventList)
