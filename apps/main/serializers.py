@@ -74,7 +74,6 @@ class MainFirstScreenSerializer(serializers.Serializer):
     title = serializers.CharField()
     url_title = serializers.CharField()
     url = serializers.URLField()
-    image = serializers.ImageField()
 
 
 class MainNewsSerializer(serializers.Serializer):
