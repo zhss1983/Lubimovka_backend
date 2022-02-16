@@ -18,7 +18,7 @@ from apps.info.tests.conftest import (
 pytestmark = pytest.mark.django_db
 
 ABOUT_FESTIVAL_URLS_AND_FIXTURES = [
-    (TEAMS_URL, pytest.lazy_fixture("team")),
+    (TEAMS_URL, pytest.lazy_fixture("festival_team")),
     (SPONSORS_URL, pytest.lazy_fixture("sponsor")),
     (VOLUNTEERS_URL, pytest.lazy_fixture("volunteer")),
 ]
@@ -92,7 +92,7 @@ class TestAboutFestivalAPIViews:
     @pytest.mark.parametrize(
         "url, objects",
         [
-            (TEAMS_URL, pytest.lazy_fixture("teams")),
+            (TEAMS_URL, pytest.lazy_fixture("festival_teams")),
             (SPONSORS_URL, pytest.lazy_fixture("sponsors")),
             (VOLUNTEERS_URL, pytest.lazy_fixture("volunteers")),
         ],
@@ -100,11 +100,10 @@ class TestAboutFestivalAPIViews:
     def test_objects_count_in_response_matches_count_in_db(self, client, url, objects):
         """Checks that count objects in response matches count in db for team, sponsor, volunteer."""
         response = client.get(url)
-        objects_count_in_response = len(response.json())
-        objects_count_in_db = len(objects)
-        assert (
-            objects_count_in_db == objects_count_in_response
-        ), f"Проверьте, что при GET запросе {url} возвращаются все объекты"
+        objects_in_response = response.json()
+        count_objects = len(objects_in_response)
+        objects_count_in_db = len(set(objects))
+        assert objects_count_in_db == count_objects, f"Проверьте, что при GET запросе {url} возвращаются все объекты"
 
     @pytest.mark.parametrize(
         "teams_filter",
@@ -113,7 +112,7 @@ class TestAboutFestivalAPIViews:
             FestivalTeam.TeamType.FESTIVAL_TEAM,
         ),
     )
-    def test_get_teams_with_filter(self, client, teams, teams_filter):
+    def test_get_teams_with_filter(self, client, festival_teams, teams_filter):
         """Checks that we can get teams with filter."""
         url = TEAMS_URL_FILTER + teams_filter
         response = client.get(url)
@@ -123,7 +122,7 @@ class TestAboutFestivalAPIViews:
             count_teams_in_db == count_teams_in_response
         ), f"Проверьте, что при GET запросе {url} возвращаются только соответствующие объекты"
 
-    def test_get_team_fields(self, client, team):
+    def test_get_team_fields(self, client, festival_team):
         """Checks team field in response."""
         url = TEAMS_URL
         response = client.get(url)
@@ -134,7 +133,7 @@ class TestAboutFestivalAPIViews:
             "position",
         ):
             team_field_in_response = data[0].get(field)
-            team_field_in_db = getattr(team, field)
+            team_field_in_db = getattr(festival_team, field)
             assert (
                 team_field_in_response == team_field_in_db
             ), f"Проверьте, что при GET запросе {url} возвращаются данные объекта. Значение {field} неправильное"
@@ -159,11 +158,11 @@ class TestAboutFestivalAPIViews:
         url = VOLUNTEERS_URL
         response = client.get(url)
         data = response.json()
-        for field in ("id", "year", "review_title", "review_text"):
-            team_field_in_response = data[0].get(field)
-            team_field_in_db = getattr(volunteer, field)
+        for field in ("id", "review_title", "review_text"):
+            volunteer_field_in_response = data[0].get(field)
+            volunteer_field_in_db = getattr(volunteer, field)
             assert (
-                team_field_in_response == team_field_in_db
+                volunteer_field_in_response == volunteer_field_in_db
             ), f"Проверьте, что при GET запросе {url} возвращаются данные объекта. Значение {field} неправильное"
 
     @pytest.mark.parametrize("url, object", ABOUT_FESTIVAL_URLS_AND_FIXTURES)

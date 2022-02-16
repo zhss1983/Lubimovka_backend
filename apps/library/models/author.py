@@ -27,6 +27,7 @@ class Author(BaseModel):
         Person,
         on_delete=models.CASCADE,
         verbose_name="Человек",
+        related_name="authors",
     )
     quote = models.CharField(
         max_length=200,
@@ -63,8 +64,6 @@ class Author(BaseModel):
 
     def clean(self):
         if self._has_person_before_saving():
-            if not self.person.email:
-                raise ValidationError("Для автора необходимо указать email")
             if not self.person.city:
                 raise ValidationError("Для автора необходимо указать город")
 
@@ -143,8 +142,8 @@ class OtherLink(BaseModel):
 
     class Meta:
         ordering = ("order_number",)
-        verbose_name = "Ссылка на сторонний ресурс"
-        verbose_name_plural = "Ссылки на стороннии ресурсы"
+        verbose_name = "Публикации и другие материалы"
+        verbose_name_plural = "Публикации и другие материалы"
         constraints = (
             models.UniqueConstraint(
                 fields=(
@@ -167,7 +166,7 @@ class OtherPlay(BaseModel):
         verbose_name="Автор",
     )
     name = models.CharField(
-        max_length=40,
+        max_length=70,
         verbose_name="Название",
     )
     link = models.URLField(

@@ -3,7 +3,6 @@ import factory
 from apps.content_pages.models import (
     ContentPersonRole,
     ExtendedPerson,
-    Image,
     ImagesBlock,
     Link,
     OrderedImage,
@@ -17,29 +16,35 @@ from apps.content_pages.models import (
     Quote,
     Text,
     Title,
-    Video,
     VideosBlock,
 )
 from apps.core.decorators import restrict_factory
 from apps.core.models import Person, Role
+from apps.core.utils import get_picsum_image
 from apps.library.models import Performance, Play
 
 
-@restrict_factory({"global": (Role,)})
+@restrict_factory(general=(Role,))
 class ContentPersonRoleFactory(factory.django.DjangoModelFactory):
-    """
-    Creates 'through' object with attrs ExtendedPerson and Role.
+    """Create 'through' object with attrs ExtendedPerson and Role.
 
     For using in ExtendedPersonFactory.
     """
 
     class Meta:
         model = ContentPersonRole
+        django_get_or_create = ("extended_person", "role")
 
-    role = factory.Iterator(Role.objects.all())
+    @factory.lazy_attribute
+    def role(self):
+        return Role.objects.order_by("?").first()
+
+    @factory.lazy_attribute
+    def extended_person(self):
+        return ExtendedPerson.objects.order_by("?").first()
 
 
-@restrict_factory({"global": (Person,)})
+@restrict_factory(general=(Person,))
 class ExtendedPersonFactory(factory.django.DjangoModelFactory):
     """
     Create Person with order and role for block.
@@ -51,9 +56,17 @@ class ExtendedPersonFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = ExtendedPerson
+        django_get_or_create = ("block", "person")
 
     order = factory.Sequence(lambda n: (n % 3 + 1))
-    person = factory.Iterator(Person.objects.all())
+
+    @factory.lazy_attribute
+    def person(self):
+        return Person.objects.order_by("?").first()
+
+    @factory.lazy_attribute
+    def block(self):
+        return PersonsBlock.objects.order_by("?").first()
 
     @factory.post_generation
     def add_roles(self, created, extracted, **kwargs):
@@ -64,8 +77,7 @@ class ExtendedPersonFactory(factory.django.DjangoModelFactory):
 
 
 class ImagesBlockFactory(factory.django.DjangoModelFactory):
-    """
-    Creates content block Image for blog, news or projects.
+    """Creates content block Image for blog, news or projects.
 
     Block creates with 3 ordered images.
     """
@@ -80,17 +92,6 @@ class ImagesBlockFactory(factory.django.DjangoModelFactory):
         if not created:
             return
         OrderedImageFactory.create_batch(3, block=self)
-
-
-class ImageForContentFactory(factory.django.DjangoModelFactory):
-    """Creates image for content block."""
-
-    class Meta:
-        model = Image
-        django_get_or_create = ("image",)
-
-    image = factory.django.ImageField(color=factory.Faker("color"))
-    title = factory.Faker("sentence", locale="ru_RU")
 
 
 class LinkFactory(factory.django.DjangoModelFactory):
@@ -109,25 +110,32 @@ class LinkFactory(factory.django.DjangoModelFactory):
     url = factory.Faker("url")
 
 
-@restrict_factory({"global": (Image,)})
 class OrderedImageFactory(factory.django.DjangoModelFactory):
-    """
-    Create Image with order for block.
+    """Create Image with order for block.
 
     Order in factory assume that there are not more than 3 ordered images in a block.
+    Parameters:
+    1. `add_real_image` — if True, tries to create object with real image
+    2. `empty_title` - if True, create OrderedImage objects with empty title
     """
 
     class Meta:
         model = OrderedImage
 
-    item = factory.Iterator(Image.objects.all())
+    class Params:
+        empty_title = factory.Trait(title="")
+        add_real_image = factory.Trait(
+            image=factory.django.ImageField(from_func=get_picsum_image),
+        )
+
+    title = factory.Faker("sentence", locale="ru_RU")
+    image = factory.django.ImageField(color=factory.Faker("color"))
     order = factory.Sequence(lambda n: (n % 3 + 1))
 
 
-@restrict_factory({"global": (Performance,)})
+@restrict_factory(general=(Performance,))
 class OrderedPerformanceFactory(factory.django.DjangoModelFactory):
-    """
-    Creates Performance with order for block.
+    """Creates Performance with order for block.
 
     Order in factory assume that there are not more than 3 ordered performances in a block.
     """
@@ -135,14 +143,16 @@ class OrderedPerformanceFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = OrderedPerformance
 
-    item = factory.Iterator(Performance.objects.all())
     order = factory.Sequence(lambda n: (n % 3 + 1))
 
+    @factory.lazy_attribute
+    def item(self):
+        return Performance.objects.order_by("?").first()
 
-@restrict_factory({"global": (Play,)})
+
+@restrict_factory(general=(Play,))
 class OrderedPlayFactory(factory.django.DjangoModelFactory):
-    """
-    Creates Play with order for block.
+    """Create Play with order for block.
 
     Order in factory assume that there are not more than 3 ordered plays in a block.
     """
@@ -150,22 +160,29 @@ class OrderedPlayFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = OrderedPlay
 
-    item = factory.Iterator(Play.objects.all())
     order = factory.Sequence(lambda n: (n % 3 + 1))
 
+    @factory.lazy_attribute
+    def item(self):
+        return Play.objects.order_by("?").first()
 
-@restrict_factory({"global": (Video,)})
+
 class OrderedVideoFactory(factory.django.DjangoModelFactory):
-    """
-    Creates Video with order for block.
+    """Create Video with order for block.
 
     Order in factory assume that there are not more than 3 ordered videos in a block.
+    Parameters:
+    1. `empty_title` - if True, create OrderedVideo objects with empty title
     """
 
     class Meta:
         model = OrderedVideo
 
-    item = factory.Iterator(Video.objects.all())
+    class Params:
+        empty_title = factory.Trait(title="")
+
+    title = factory.Faker("sentence", locale="ru_RU")
+    url = factory.Faker("url")
     order = factory.Sequence(lambda n: (n % 3 + 1))
 
 
@@ -284,19 +301,3 @@ class VideosBlockFactory(factory.django.DjangoModelFactory):
         if not created:
             return
         OrderedVideoFactory.create_batch(3, block=self)
-
-
-class VideoFactory(factory.django.DjangoModelFactory):
-    """Creates content item Video for project."""
-
-    class Meta:
-        model = Video
-
-    description = factory.Faker(
-        "paragraph",
-        locale="ru_RU",
-        nb_sentences=5,
-        variable_nb_sentences=False,
-    )
-    title = factory.Faker("sentence", locale="ru_RU")
-    url = factory.Faker("url")

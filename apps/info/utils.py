@@ -32,7 +32,7 @@ def send_question(serializer):
 def get_pdf_response(press_release_instance, path_to_font):
     press_release_year = press_release_instance.festival.year
     response = HttpResponse(content_type="application/pdf")
-    response["Content-Disposition"] = f"attachment; filename='press-release_{press_release_year}.pdf'"
+    response["Content-Disposition"] = f"attachment; filename=press-release_{press_release_year}.pdf"
     template = get_template("press_release.html")
     content = template.render(
         {
@@ -46,5 +46,8 @@ def get_pdf_response(press_release_instance, path_to_font):
         encoding="UTF-8",
     )
     if pisa_status.err:
-        return Response("Пожалуйста, попробуйте повторить попытку позже", status_code=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            "Пожалуйста, попробуйте повторить попытку позже",
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
     return response

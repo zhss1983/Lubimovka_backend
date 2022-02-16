@@ -1,21 +1,20 @@
 from django.urls import include, path
-from rest_framework.routers import DefaultRouter
 
 from apps.info.views import (
+    ContactsAPIView,
+    FeedbackAPIView,
     FestivalAPIView,
     FestivalTeamsAPIView,
     FestivalYearsAPIView,
     PartnersAPIView,
+    PressReleaseDownloadAPIView,
+    PressReleasePhotoGalleryLink,
     PressReleaseViewSet,
+    PressReleaseYearsAPIView,
     QuestionCreateAPIView,
     SponsorsAPIView,
     VolunteersAPIView,
 )
-from apps.static_pages.views import StaticPagesView
-
-router = DefaultRouter()
-router.register("", PressReleaseViewSet, basename="press_release")
-
 
 about_festival_urls = [
     path(
@@ -32,11 +31,6 @@ about_festival_urls = [
         "volunteers/",
         VolunteersAPIView.as_view(),
         name="volunteers",
-    ),
-    path(
-        "<slug:static_page_url>/",
-        StaticPagesView.as_view(),
-        name="static_page",
     ),
 ]
 
@@ -61,11 +55,40 @@ info_urls = [
         name="partners",
     ),
     path(
+        "contacts/",
+        ContactsAPIView.as_view(),
+        name="contacts",
+    ),
+    path(
+        "feedback/",
+        FeedbackAPIView.as_view(),
+        name="feedback",
+    ),
+    path(
         "questions/",
         QuestionCreateAPIView.as_view(),
         name="questions",
     ),
-    path("press-releases/", include(router.urls)),
+    path(
+        "press-releases/<int:festival__year>/",
+        PressReleaseViewSet.as_view({"get": "retrieve"}),
+        name="press-releases",
+    ),
+    path(
+        "press-releases/years/",
+        PressReleaseYearsAPIView.as_view(),
+        name="press-releases_years",
+    ),
+    path(
+        "press-releases/<int:festival__year>/download/",
+        PressReleaseDownloadAPIView.as_view(),
+        name="press-releases_download",
+    ),
+    path(
+        "press-releases/photo_gallery_link/",
+        PressReleasePhotoGalleryLink.as_view(),
+        name="press-release-photo-gallery-link",
+    ),
 ]
 
 app_prefix = [

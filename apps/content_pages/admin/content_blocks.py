@@ -14,7 +14,7 @@ from apps.content_pages.models import (
     PlaysBlock,
     VideosBlock,
 )
-from apps.core.mixins import HideOnNavPanelAdminModelMixin
+from apps.core.mixins import AdminImagePreview, HideOnNavPanelAdminModelMixin
 
 
 class ContentPersonRoleInline(admin.TabularInline):
@@ -27,7 +27,8 @@ class OrderedInline(SortableInlineAdminMixin, admin.TabularInline):
     extra = 0
 
 
-class OrderedImageInline(OrderedInline):
+class OrderedImageInline(AdminImagePreview, OrderedInline):
+    readonly_fields = ("image_preview_change_page",)
     model = OrderedImage
     max_num = 8
 
@@ -69,10 +70,7 @@ class ExtendedPersonAdmin(HideOnNavPanelAdminModelMixin, admin.ModelAdmin):
 
 @admin.register(ImagesBlock)
 class ImagesBlockAdmin(HideOnNavPanelAdminModelMixin, admin.ModelAdmin):
-    list_display = (
-        "id",
-        "title",
-    )
+    list_display = ("title",)
     inlines = (OrderedImageInline,)
 
 

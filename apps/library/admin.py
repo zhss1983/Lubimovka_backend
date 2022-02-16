@@ -1,7 +1,7 @@
 from django.contrib import admin
+from django.contrib.sites.models import Site
 
-from apps.core.models import Role
-from apps.library.forms import PerformanceAdminForm
+from apps.core.models import Person, Role
 from apps.library.models import (
     Achievement,
     Author,
@@ -55,10 +55,7 @@ class PlayAdmin(admin.ModelAdmin):
 
 
 class AchievementAdmin(admin.ModelAdmin):
-    list_display = (
-        "id",
-        "tag",
-    )
+    list_display = ("tag",)
 
 
 class AchievementInline(admin.TabularInline):
@@ -92,7 +89,6 @@ class OtherPlayInline(admin.StackedInline):
 
 class AuthorAdmin(admin.ModelAdmin):
     list_display = (
-        "id",
         "person",
         "quote",
         "biography",
@@ -112,6 +108,14 @@ class AuthorAdmin(admin.ModelAdmin):
         "other_plays_links",
     )
     empty_value_display = "-пусто-"
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        if obj:
+            form.base_fields["person"].queryset = Person.objects.exclude(authors__in=Author.objects.exclude(id=obj.id))
+        else:
+            form.base_fields["person"].queryset = Person.objects.exclude(authors__in=Author.objects.all())
+        return form
 
 
 class PerformanceMediaReviewAdmin(admin.ModelAdmin):
@@ -155,16 +159,22 @@ class ProgramTypeAdmin(admin.ModelAdmin):
     list_filter = ("name",)
     search_fields = ("name",)
 
+    def get_readonly_fields(self, request, obj=None):
+        """Only superusers can edit slug field."""
+        if not request.user.is_superuser:
+            return ("slug",)
+        return super().get_readonly_fields(request, obj)
+
 
 class PerformanceReviewInline(admin.TabularInline):
     model = PerformanceReview
-    extra = 1
+    extra = 0
     max_num = 8
 
 
 class PerformanceMediaReviewInline(admin.TabularInline):
     model = PerformanceMediaReview
-    extra = 1
+    extra = 0
     max_num = 8
 
 
@@ -174,7 +184,7 @@ class TeamMemberInline(admin.TabularInline):
         "person",
         "role",
     )
-    extra = 1
+    extra = 0
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         """Restricts role types for the model where inline is used."""
@@ -190,11 +200,22 @@ class TeamMemberInline(admin.TabularInline):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
+class ImagesInBlockInline(admin.TabularInline):
+    model = Performance.images_in_block.through
+    verbose_name = "Изображение в блоке изображений"
+    verbose_name_plural = "Изображения в блоке изображений"
+    extra = 0
+    max_num = 8
+
+
 class PerformanceAdmin(admin.ModelAdmin):
-    exclude = ("events",)
-    filter_horizontal = (
+    list_display = (
+        "name",
+        "play",
+    )
+    exclude = (
+        "events",
         "images_in_block",
-        "persons",
     )
     list_filter = ("age_limit",)
     search_fields = (
@@ -202,8 +223,8 @@ class PerformanceAdmin(admin.ModelAdmin):
         "name",
         "text",
     )
-    form = PerformanceAdminForm
     inlines = (
+        ImagesInBlockInline,
         PerformanceReviewInline,
         PerformanceMediaReviewInline,
         TeamMemberInline,
@@ -235,8 +256,6 @@ class MasterClassAdmin(admin.ModelAdmin):
 
 class ParticipationAdmin(admin.ModelAdmin):
     list_display = (
-        "id",
-        "verified",
         "title",
         "first_name",
         "last_name",
@@ -244,6 +263,7 @@ class ParticipationAdmin(admin.ModelAdmin):
         "year",
         "created",
         "file",
+        "verified",
     )
     list_filter = (
         "year",
@@ -259,15 +279,6 @@ class ParticipationAdmin(admin.ModelAdmin):
     )
 
 
-class TeamMemberAdmin(admin.ModelAdmin):
-    list_display = (
-        "id",
-        "person",
-        "role",
-    )
-    search_fields = ("role",)
-
-
 admin.site.register(Play, PlayAdmin)
 admin.site.register(Performance, PerformanceAdmin)
 admin.site.register(Achievement, AchievementAdmin)
@@ -275,10 +286,7 @@ admin.site.register(Author, AuthorAdmin)
 admin.site.register(PerformanceMediaReview, PerformanceMediaReviewAdmin)
 admin.site.register(PerformanceReview, PerformanceReviewAdmin)
 admin.site.register(ParticipationApplicationFestival, ParticipationAdmin)
-admin.site.register(TeamMember, TeamMemberAdmin)
-admin.site.register(SocialNetworkLink)
-admin.site.register(OtherPlay)
-admin.site.register(OtherLink)
 admin.site.register(Reading, ReadingAdmin)
 admin.site.register(MasterClass, MasterClassAdmin)
 admin.site.register(ProgramType, ProgramTypeAdmin)
+admin.site.unregister(Site)

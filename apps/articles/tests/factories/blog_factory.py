@@ -3,7 +3,6 @@ from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
 
 from apps.articles.models import BlogItem, BlogItemContent, BlogPerson
-from apps.content_pages.models import Image
 from apps.content_pages.tests.factories import (
     ImagesBlockFactory,
     PersonsBlockFactory,
@@ -26,7 +25,7 @@ def add_content_item_to_blog(blog, created, count, factory):
         BlogItemContentFactory.create_batch(count, item=factory, content_page=blog)
 
 
-@restrict_factory({"global": [Person, Role]})
+@restrict_factory(general=(Person, Role))
 class BlogPersonFactory(factory.django.DjangoModelFactory):
     """
     Creates co-author for Blog.
@@ -38,8 +37,13 @@ class BlogPersonFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = BlogPerson
 
-    person = factory.Iterator(Person.objects.all())
-    role = factory.Iterator(Role.objects.filter(types__role_type="blog_persons_role"))
+    @factory.lazy_attribute
+    def person(self):
+        return Person.objects.order_by("?").first()
+
+    @factory.lazy_attribute
+    def role(self):
+        return Role.objects.filter(types__role_type="blog_persons_role").order_by("?").first()
 
 
 class BlogItemContentFactory(factory.django.DjangoModelFactory):
@@ -60,11 +64,8 @@ class BlogItemContentFactory(factory.django.DjangoModelFactory):
 
 
 @restrict_factory(
-    {
-        "add_several_imagesblock": (Image,),
-        "add_several_playsblock": (Play,),
-        "add_several_personsblock": (Person,),
-    }
+    add_several_playsblock=(Play,),
+    add_several_personsblock=(Person,),
 )
 class BlogFactory(factory.django.DjangoModelFactory):
     """
