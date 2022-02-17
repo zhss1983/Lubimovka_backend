@@ -34,10 +34,7 @@ class AbstractOrderedItemBase(BaseModel):
 
 class OrderedImage(AbstractOrderedItemBase):
     item = models.ForeignKey(
-        Image,
-        on_delete=models.CASCADE,
-        related_name="ordered_images",
-        verbose_name="Изображение",
+        Image, on_delete=models.CASCADE, related_name="ordered_images", verbose_name="Изображение", default=""
     )
     block = models.ForeignKey(
         "ImagesBlock",
@@ -48,10 +45,7 @@ class OrderedImage(AbstractOrderedItemBase):
 
 class OrderedPerformance(AbstractOrderedItemBase):
     item = models.ForeignKey(
-        Performance,
-        on_delete=models.CASCADE,
-        related_name="ordered_performances",
-        verbose_name="Спектакль",
+        Performance, on_delete=models.CASCADE, related_name="ordered_performances", verbose_name="Спектакль", default=""
     )
     block = models.ForeignKey(
         "PerformancesBlock",
@@ -144,10 +138,7 @@ class ExtendedPerson(AbstractOrderedItemBase):
 
 class OrderedPlay(AbstractOrderedItemBase):
     item = models.ForeignKey(
-        Play,
-        on_delete=models.CASCADE,
-        related_name="ordered_plays",
-        verbose_name="Пьеса",
+        Play, on_delete=models.CASCADE, related_name="ordered_plays", verbose_name="Пьеса", default=""
     )
     block = models.ForeignKey(
         "PlaysBlock",
@@ -158,10 +149,7 @@ class OrderedPlay(AbstractOrderedItemBase):
 
 class OrderedVideo(AbstractOrderedItemBase):
     item = models.ForeignKey(
-        Video,
-        on_delete=models.CASCADE,
-        related_name="ordered_videos",
-        verbose_name="Видео",
+        Video, on_delete=models.CASCADE, related_name="ordered_videos", verbose_name="Видео", default=""
     )
     block = models.ForeignKey(
         "VideosBlock",
