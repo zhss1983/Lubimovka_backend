@@ -1,3 +1,5 @@
+from os import name
+
 from django.db import migrations
 
 
@@ -7,6 +9,8 @@ def set_default_groups(apps, schema_editor):
         [
             Group(name="admin"),
             Group(name="editor"),
+            Group(name="journalist"),
+            Group(name="observer"),
         ]
     )
 
@@ -173,13 +177,6 @@ def add_email_settings(apps, schema_editor):
     Setting.objects.create(
         field_type="TEXT",
         group="EMAIL",
-        settings_key="email_question_template_id",
-        text="3482754",
-        description="Id шаблона письма с вопросом",
-    )
-    Setting.objects.create(
-        field_type="TEXT",
-        group="EMAIL",
         settings_key="email_send_from",
         text="lubimovka-2021@yandex.ru",
         description="Почта для отправки вопроса",
@@ -287,20 +284,12 @@ def add_general_settings(apps, schema_editor):
         description="Цвет сайта",
     )
     Setting.objects.create(
-        field_type="BOOLEAN",
-        group="GENERAL",
-        settings_key="form_to_submit_a_play",
-        boolean=True,
-        description="Форма для отправки пьесы",
-    )
-    Setting.objects.create(
         field_type="URL",
         group="GENERAL",
         settings_key="url_to_privacy_policy",
         url="privacy-policy",
         description="Ссылка на обработку персональных данных",
     )
-
     Setting.objects.create(
         field_type="URL",
         group="GENERAL",
@@ -407,6 +396,33 @@ def add_main_settings(apps, schema_editor):
     )
 
 
+def add_playsupply_settings(apps, schema_editor):
+
+    Setting = apps.get_model("core", "Setting")
+
+    Setting.objects.create(
+        field_type="TEXT",
+        group="PLAY_SUPPLY",
+        settings_key="SPREADSHEET_ID",
+        text="1PB-Rzd46wHpldZptqc7CEn9VNkv3iRJuo9e87Xtpgb4",
+        description="id Google таблицы",
+    )
+    Setting.objects.create(
+        field_type="TEXT",
+        group="PLAY_SUPPLY",
+        settings_key="SHEET",
+        text="Лист1",
+        description="Наименование листа Google таблицы",
+    )
+    Setting.objects.create(
+        field_type="BOOLEAN",
+        group="PLAY_SUPPLY",
+        settings_key="form_to_submit_a_play",
+        boolean=True,
+        description="Форма для отправки пьесы",
+    )
+
+
 def add_short_list_program(apps, schema_editor):
     Program = apps.get_model(
         "library",
@@ -423,6 +439,7 @@ class Migration(migrations.Migration):
     dependencies = [
         ("core", "0001_initial"),
         ("sites", "0002_alter_domain_unique"),
+        ("library", "0001_initial"),
     ]
 
     operations = [
@@ -455,5 +472,8 @@ class Migration(migrations.Migration):
         ),
         migrations.RunPython(
             add_short_list_program,
+        ),
+        migrations.RunPython(
+            add_playsupply_settings,
         ),
     ]

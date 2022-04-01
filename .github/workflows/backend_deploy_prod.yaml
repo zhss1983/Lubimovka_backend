@@ -70,7 +70,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: .
-          file: Dockerfile
+          file: Dockerfile_prod
           labels: runnumber=${GITHUB_RUN_ID}
           push: true
           tags: |
@@ -148,11 +148,20 @@ jobs:
             echo MAILJET_API_KEY=${{ secrets.MAILJET_API_KEY }} >> .env-prod
             echo MAILJET_SECRET_KEY=${{ secrets.MAILJET_SECRET_KEY }} >> .env-prod
 
+            # Secrets variables for google sheets in Django:
+            echo GOOGLE_PRIVATE_KEY_ID=${{ secrets.GOOGLE_PRIVATE_KEY_ID }} >> .env-prod
+            echo GOOGLE_PRIVATE_KEY=${{ secrets.GOOGLE_PRIVATE_KEY }} >> .env-prod
+
             # Swag environment variables
             echo PUID=${{ secrets.PUID }} >> .env-prod
             echo PGID=${{ secrets.PGID }} >> .env-prod
             echo URL=${{ secrets.URL }} >> .env-prod
             echo EMAIL=${{ secrets.SSL_EMAIL }} >> .env-prod
+
+            echo YNDX_DISK=${{ secrets.YNDX_DISK }} >> .env-prod
+
+            # Очистка неиспользуемых контейнеров, образов, сетей
+            docker system prune --force
 
             docker network create prod_db_network || true
             docker network create prod_swag_network || true

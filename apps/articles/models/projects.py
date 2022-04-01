@@ -1,11 +1,12 @@
 from django.db import models
 
 from apps.content_pages.models import AbstractContent, AbstractContentPage
+from apps.content_pages.utilities import path_by_app_label_and_class_name
 
 
 class Project(AbstractContentPage):
     image = models.ImageField(
-        upload_to="images/articles/projects/",
+        upload_to=path_by_app_label_and_class_name,
         verbose_name="Заглавная картинка",
     )
     intro = models.TextField(
@@ -21,6 +22,11 @@ class Project(AbstractContentPage):
         ordering = ("-pub_date",)
         verbose_name = "Проект"
         verbose_name_plural = "Проекты"
+        permissions = (
+            ("access_level_1", "Права журналиста"),
+            ("access_level_2", "Права редактора"),
+            ("access_level_3", "Права главреда"),
+        )
 
 
 class ProjectContent(AbstractContent):

@@ -48,7 +48,7 @@ class AuthorRetrieveSerializer(serializers.ModelSerializer):
     class Meta:
         model = Author
         fields = (
-            "id",
+            "slug",
             "name",
             "city",
             "quote",
@@ -69,7 +69,7 @@ class AuthorListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Author
         fields = (
-            "id",
+            "slug",
             "name",
         )
 
@@ -82,13 +82,17 @@ class AuthorSearchSerializer(serializers.ModelSerializer):
     )
     first_letter = serializers.SerializerMethodField()
 
-    def get_first_letter(self, obj):
+    def get_first_letter(self, obj) -> str:
         return obj.person.last_name[0].upper()
 
     class Meta:
         model = Author
         fields = (
-            "id",
+            "slug",
             "name",
             "first_letter",
         )
+
+
+class AuthorLettersSerializer(serializers.Serializer):
+    letters = serializers.ListField(child=serializers.CharField())

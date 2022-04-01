@@ -2,28 +2,29 @@ from typing import Any, Optional
 
 from django.core.management.base import BaseCommand, CommandError
 
-from apps.afisha.tests.factories import EventFactory
-from apps.core.tests.factories import ImageFactory, PersonFactory
-from apps.info.tests.factories import (
+from apps.afisha.factories import EventFactory
+from apps.core.factories import ImageFactory, PersonFactory
+from apps.info.factories import (
     FestivalFactory,
     FestivalTeamFactory,
     PartnerFactory,
     PlaceFactory,
     PressReleaseFactory,
+    SelectorFactory,
     SponsorFactory,
     VolunteerFactory,
 )
-from apps.library.tests.factories import (
+from apps.library.factories import (
     AuthorFactory,
     MasterClassFactory,
     ParticipationApplicationFestivalFactory,
     PerformanceFactory,
     PlayFactory,
-    ProgramFactory,
+    ProgramTypeFactory,
     ReadingFactory,
 )
-from apps.main.tests.factories import BannerFactory as MainBannerFactory
-from apps.users.tests.factories import AdminUserFactory, EditorUserFactory
+from apps.main.factories import BannerFactory as MainBannerFactory
+from apps.users.factories import AdminUserFactory, EditorUserFactory, JournalistUserFactory, ObserverUserFactory
 
 
 def notification(command, objects, text):
@@ -48,6 +49,8 @@ class Command(BaseCommand):
         " - Видео (ссылки с описанием)"
         " - Пользователи-админы"
         " - Пользователи-редакторы"
+        " - Пользователи-журналисты"
+        " - Пользователи-наблюдатели"
         " - Программы"
         " - Авторы"
         " - Пьесы"
@@ -100,27 +103,36 @@ class Command(BaseCommand):
             volunteers = VolunteerFactory.create_batch(50)
             notification(self, volunteers, "волонтёров")
 
+            selectors = SelectorFactory.create_batch(30)
+            notification(self, selectors, "отборщиков")
+
             press_releases = PressReleaseFactory.create_batch(10)
             notification(self, press_releases, "пресс-релизов")
 
-            users_editors = AdminUserFactory.create_batch(5)
+            users_admins = AdminUserFactory.create_batch(5)
+            notification(self, users_admins, "админов")
+
+            users_editors = EditorUserFactory.create_batch(5)
             notification(self, users_editors, "редакторов")
 
-            users_admins = EditorUserFactory.create_batch(5)
-            notification(self, users_admins, "админов")
+            users_journalists = JournalistUserFactory.create_batch(5)
+            notification(self, users_journalists, "журналистов")
+
+            users_observers = ObserverUserFactory.create_batch(2)
+            notification(self, users_observers, "наблюдателя")
 
             # Library factories.
 
-            programtypes = ProgramFactory.create_batch(3)
+            programtypes = ProgramTypeFactory.create_batch(3)
             notification(self, programtypes, "программ")
 
             plays = PlayFactory.create_batch(10)
             notification(self, plays, "пьес")
 
-            perfomances = [PerformanceFactory.complex_create() for _ in range(6)]
+            perfomances = PerformanceFactory.complex_create(6)
             notification(self, perfomances, "спектаклей")
 
-            authors = [AuthorFactory.complex_create() for _ in range(15)]
+            authors = AuthorFactory.complex_create(15)
             notification(self, authors, "авторов")
 
             masterclasses = MasterClassFactory.create_batch(10)
@@ -137,6 +149,9 @@ class Command(BaseCommand):
 
             places = PlaceFactory.create_batch(3)
             notification(self, places, "мест")
+
+            events_of_performances = EventFactory.create_batch(5, performance=True)
+            notification(self, events_of_performances, "событий спектакля")
 
             events = EventFactory.create_batch(10)
             notification(self, events, "событий")

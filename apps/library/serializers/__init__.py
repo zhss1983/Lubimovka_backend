@@ -1,4 +1,4 @@
-from .author import AuthorListSerializer, AuthorRetrieveSerializer, AuthorSearchSerializer
+from .author import AuthorLettersSerializer, AuthorListSerializer, AuthorRetrieveSerializer, AuthorSearchSerializer
 from .masterclass import EventMasterClassSerializer
 from .performance import (
     EventPerformanceSerializer,
@@ -9,12 +9,13 @@ from .performance import (
 from .play import AuthorForPlaySerializer, PlaySerializer
 from .playfilters import PlayFiltersSerializer
 from .reading import EventReadingSerializer
-from .role import RoleSerializer, RoleWithPluralPersonsSerializer
+from .role import RoleSerializer
 
 __all__ = (
     AuthorListSerializer,
     AuthorRetrieveSerializer,
     AuthorSearchSerializer,
+    AuthorLettersSerializer,
     AuthorForPlaySerializer,
     EventMasterClassSerializer,
     EventPerformanceSerializer,
@@ -25,5 +26,4 @@ __all__ = (
     PerformanceReviewSerializer,
     PerformanceMediaReviewSerializer,
     RoleSerializer,
-    RoleWithPluralPersonsSerializer,
 )

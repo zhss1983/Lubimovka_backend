@@ -1,7 +1,7 @@
 from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
 from rest_framework import serializers
 
-from apps.afisha.serializers import EventRegularSerializer
+from apps.afisha.serializers import AfishaEventSerializer
 from apps.articles.serializers import BlogItemListSerializer, NewsItemListSerializer
 from apps.info.serializers.place import PlaceSerializer
 from apps.library.serializers import PlaySerializer
@@ -12,7 +12,7 @@ from apps.main.schema.schema_extension import MAIN_SCHEMA_SUCCESS_MESSAGE
 class BannerSerializer(serializers.ModelSerializer):
     button = serializers.SerializerMethodField()
 
-    def get_button(self, obj):
+    def get_button(self, obj) -> str:
         return obj.get_button_display()
 
     class Meta:
@@ -24,12 +24,11 @@ class MainAfishaSerializer(serializers.Serializer):
     """Returns title and items for `afisha` block on main page.
 
     items: depending on the settings, it returns events for today or for 6 upcoming events.
-
     """
 
     afisha_today = serializers.BooleanField(default=False)
     description = serializers.CharField()
-    items = EventRegularSerializer(many=True)
+    items = AfishaEventSerializer(many=True)
 
 
 class MainBannersSerializer(serializers.Serializer):

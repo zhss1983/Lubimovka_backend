@@ -1,11 +1,25 @@
 from django.contrib import admin
+from django.core.exceptions import ValidationError
 from django.utils.html import format_html
 
 from apps.core.mixins import AdminImagePreview
-from apps.core.models import Person
-from apps.info.models import Festival, FestivalTeam, Partner, Place, PressRelease, Sponsor, Volunteer
+from apps.core.models import Person, Setting
+from apps.info.form import FestTeamMemberForm
+from apps.info.models import (
+    Festival,
+    FestivalTeamMember,
+    Partner,
+    Place,
+    PressRelease,
+    Question,
+    Selector,
+    Sponsor,
+    Volunteer,
+)
+from apps.info.models.festival import ArtTeamMember, FestTeamMember
 
 
+@admin.register(Partner)
 class PartnerAdmin(AdminImagePreview, admin.ModelAdmin):
     """Class for registration Partner model in admin panel and expanded with JS script.
 
@@ -66,6 +80,7 @@ class PartnerAdmin(AdminImagePreview, admin.ModelAdmin):
         js = ("admin/info/js/PartnerInFooter.js",)
 
 
+@admin.register(Person)
 class PersonAdmin(AdminImagePreview, admin.ModelAdmin):
     list_display = (
         "full_name",
@@ -79,6 +94,7 @@ class PersonAdmin(AdminImagePreview, admin.ModelAdmin):
     readonly_fields = ("image_preview_change_page",)
 
 
+@admin.register(Volunteer)
 class VolunteerAdmin(admin.ModelAdmin):
     list_display = (
         "person",
@@ -117,12 +133,13 @@ class VolunteerInline(admin.TabularInline):
         "review_title",
         "review_text",
     )
-    ordering = ("person__last_name",)
+    classes = ["collapse"]
+    ordering = ("person__last_name", "person__first_name")
 
     @admin.display(
         boolean=True,
         ordering="review_title",
-        description="ОТЗЫВ?",
+        description="Есть отзыв?",
     )
     def is_review(self, obj):
         if obj.review_text:
@@ -130,13 +147,17 @@ class VolunteerInline(admin.TabularInline):
         return False
 
 
-class FestivalImagesInline(admin.TabularInline):
+class FestivalImagesInline(admin.TabularInline, AdminImagePreview):
     model = Festival.images.through
-    verbose_name = "Изображение"
-    verbose_name_plural = "Изображения"
+    readonly_fields = ("inline_image_preview",)
+    verbose_name = "Изображение фестиваля"
+    verbose_name_plural = "Изображения фестиваля"
     extra = 1
+    classes = ["collapse"]
+    model.__str__ = lambda self: ""
 
 
+@admin.register(Festival)
 class FestivalAdmin(admin.ModelAdmin):
     list_display = ("year",)
     inlines = (
@@ -151,6 +172,7 @@ class FestivalAdmin(admin.ModelAdmin):
     empty_value_display = "-пусто-"
 
 
+@admin.register(Place)
 class PlaceAdmin(admin.ModelAdmin):
     list_display = (
         "name",
@@ -162,6 +184,7 @@ class PlaceAdmin(admin.ModelAdmin):
     search_fields = ("name", "address")
 
 
+@admin.register(PressRelease)
 class PressReleaseAdmin(admin.ModelAdmin):
     list_display = ("festival",)
     list_filter = ("festival",)
@@ -173,17 +196,103 @@ class PressRealeaseAdmin(admin.ModelAdmin):
     search_fields = ("title",)
 
 
-class FestivalTeamAdmin(admin.ModelAdmin):
+@admin.register(ArtTeamMember)
+class ArtTeamMemberAdmin(admin.ModelAdmin):
     list_display = (
         "person",
         "team",
         "position",
     )
-    ordering = ("person__last_name",)
-    list_filter = ("team",)
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    "person",
+                    "position",
+                ),
+            },
+        ),
+    )
+
+    ordering = ("person__last_name", "person__first_name")
+
     search_fields = ("position", "person__first_name", "person__last_name")
 
+    def get_queryset(self, request):
+        qs = self.model._default_manager.get_queryset().filter(team="art")
+        return qs
 
+    def save_model(self, request, obj, form, change):
+        """Устанваливается поле "team" на значение "art"."""
+        if form.is_valid():
+            team = "art"
+            obj = form.save(commit=False)
+            obj.team = team
+            obj.save()
+        else:
+            raise ValidationError("Заполните поля корректно")
+
+
+@admin.register(FestTeamMember)
+class FestTeamMemberAdmin(admin.ModelAdmin):
+    form = FestTeamMemberForm
+    list_display = (
+        "person",
+        "team",
+        "position",
+        "is_pr_director",
+    )
+    list_filter = ("is_pr_director",)
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    "person",
+                    "position",
+                    "is_pr_director",
+                ),
+            },
+        ),
+        (
+            None,
+            {
+                "fields": ("pr_director_name",),
+                "classes": ("form-row field-pr_director_name",),
+            },
+        ),
+    )
+
+    ordering = ("person__last_name", "person__first_name")
+
+    search_fields = ("position", "person__first_name", "person__last_name")
+
+    def save_model(self, request, obj, form, change):
+        """Данные из поля 'pr_director_name' проверяются и сохраняются в модели 'Setting'."""
+        if form.is_valid():
+            team = "fest"
+            if obj.is_pr_director:
+                name_director = form.cleaned_data["pr_director_name"]
+                FestivalTeamMember.objects.filter(is_pr_director=True).update(is_pr_director=False)
+                Setting.objects.filter(settings_key="pr_director_name").update(text=name_director)
+            obj = form.save(commit=False)
+            obj.team = team
+            obj.save()
+        else:
+            raise ValidationError("Заполните поля корректно")
+
+    def get_queryset(self, request):
+        qs = self.model._default_manager.get_queryset().filter(team="fest")
+        return qs
+
+    class Media:
+        """Adds a script that displays the field ```pr_director_name``` if ```is_pr_director``` is selected."""
+
+        js = ("admin/info/js/FestivalTeamFooter.js",)
+
+
+@admin.register(Sponsor)
 class SponsorAdmin(admin.ModelAdmin):
     list_display = (
         "person",
@@ -191,11 +300,29 @@ class SponsorAdmin(admin.ModelAdmin):
     )
 
 
-admin.site.register(Festival, FestivalAdmin)
-admin.site.register(PressRelease, PressReleaseAdmin)
-admin.site.register(Partner, PartnerAdmin)
-admin.site.register(Person, PersonAdmin)
-admin.site.register(Place, PlaceAdmin)
-admin.site.register(FestivalTeam, FestivalTeamAdmin)
-admin.site.register(Volunteer, VolunteerAdmin)
-admin.site.register(Sponsor, SponsorAdmin)
+@admin.register(Question)
+class QuestionAdmin(admin.ModelAdmin):
+    list_display = ("id", "author_name", "author_email", "question", "sent")
+    list_filter = ("sent",)
+
+    def has_module_permission(self, request):
+        if request.user.is_authenticated and (request.user.is_admin or request.user.is_superuser):
+            return super().has_module_permission(request)
+        return False
+
+
+@admin.register(Selector)
+class SelectorAdmin(admin.ModelAdmin):
+    list_display = (
+        "person",
+        "get_year",
+        "position",
+    )
+
+    @admin.display(
+        ordering="festival",
+        description="Год фестиваля",
+    )
+    def get_year(self, obj):
+        """Возвращает год фестиваля."""
+        return obj.festival.year

@@ -1,11 +1,13 @@
 import pytest
+from django.conf import settings
 from django.urls import reverse
 
-from apps.core.tests.factories import ImageFactory, PersonFactory
-from apps.info.tests.factories import (
+from apps.core.factories import ImageFactory, PersonFactory
+from apps.info.factories import (
     FestivalFactory,
     FestivalTeamFactory,
     PartnerFactory,
+    SelectorFactory,
     SponsorFactory,
     VolunteerFactory,
 )
@@ -18,6 +20,11 @@ SPONSORS_URL = reverse("sponsors")
 VOLUNTEERS_URL = reverse("volunteers")
 PARTNERS_URL = reverse("partners")
 QUESTIONS_URL = reverse("questions")
+
+
+@pytest.fixture(autouse=True)
+def set_media_temp_folder(tmpdir):
+    settings.MEDIA_ROOT = tmpdir.mkdir("media")
 
 
 @pytest.fixture
@@ -68,6 +75,16 @@ def volunteer(persons_with_image_email_city, festival):
 @pytest.fixture
 def volunteers(persons_with_image_email_city, festival):
     return VolunteerFactory.create_batch(5)
+
+
+@pytest.fixture
+def selector(persons_with_image_email_city, festival):
+    return SelectorFactory()
+
+
+@pytest.fixture
+def selectors(persons_with_image_email_city, festival):
+    return SelectorFactory.create_batch(5)
 
 
 @pytest.fixture

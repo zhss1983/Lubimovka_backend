@@ -59,14 +59,9 @@ class Event(BaseModel):
         choices=EventType.choices,
         max_length=50,
         verbose_name="Тип события",
-        blank=True,
     )
     date_time = models.DateTimeField(
         verbose_name="Дата и время",
-    )
-    date = models.DateField(
-        null=True,
-        verbose_name="Дата",
     )
     paid = models.BooleanField(
         verbose_name="Платное",
@@ -104,7 +99,6 @@ class Event(BaseModel):
             Reading: self.EventType.READING,
         }
         self.type = allowed_event_types[type(self.common_event.target_model)]
-        self.date = self.date_time.date()
         super().save(*args, **kwargs)
 
     def clean(self):

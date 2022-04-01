@@ -4,8 +4,9 @@ from pathlib import Path
 
 import environ
 
-env = environ.Env()
+from config.logging.logging_settings import LOGGING_SETTINGS
 
+env = environ.Env()
 # Root folder of the project
 # ------------------------------------------------------------------------------
 ROOT_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
@@ -20,6 +21,7 @@ DEBUG = env.bool("DJANGO_DEBUG", False)
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#root-urlconf
 ROOT_URLCONF = "config.urls"
+
 # https://docs.djangoproject.com/en/dev/ref/settings/#wsgi-application
 WSGI_APPLICATION = "config.wsgi.application"
 
@@ -90,6 +92,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "apps.core.context_processors.admin_versioning",
             ],
         },
     },
@@ -183,14 +186,65 @@ EMAIL_TIMEOUT = 5
 # Use CKEditor (Configuration)
 # ------------------------------------------------------------------------------
 CKEDITOR_CONFIGS = {
-    'default': {
+    "default": {
         "removePlugins": "elementspath",
-        "removeDialogTabs": 'dialog:advanced',
-        'toolbar': 'Custom',
-        'toolbar_Custom': [
-            ['Undo', 'Redo'],
-            ['Bold', 'Italic', 'Underline', 'Strike'],
-            ['Link', 'Unlink'],
-        ]
+        "removeDialogTabs": "dialog:advanced",
+        "toolbar": "Custom",
+        "toolbar_Custom": [
+            ["Undo", "Redo"],
+            ["Bold", "Italic", "Underline", "Strike"],
+            ["Link", "Unlink"],
+        ],
+    }
+}
+GOOGLE_PRIVATE_KEY = env("GOOGLE_PRIVATE_KEY", default="private_key").replace("\\n", "\n")
+GOOGLE_PRIVATE_KEY_ID = env("GOOGLE_PRIVATE_KEY_ID", default="private_key_id")
+
+# https://docs.djangoproject.com/en/4.0/topics/logging/#configuring-logging
+LOGGING = LOGGING_SETTINGS
+
+MAILJET_TEMPLATE_ID = env("MAILJET_TEMPLATE_ID", default="0000000")
+
+ADMIN_SITE_APPS_ORDER = (
+    "Библиотека",
+    "Новости, Проекты, Блог",
+    "Афиша",
+    "Информация",
+    "Общие ресурсы приложений",
+    "Настройки приложения",
+    "Пользователи",
+)
+
+ADMIN_SITE_MODELS_ORDER = {
+    "Библиотека": [
+        "Авторы",
+        "Пьесы",
+        "Программы",
+        "Спектакли",
+        "Мастер-классы",
+        "Читки",
+    ],
+    "Информация": [
+        "Фестивали",
+        "Пресс-релизы",
+        "Волонтёры фестиваля",
+        "Команда фестиваля",
+        "Попечители фестиваля",
+        "Арт-дирекция фестиваля",
+        "Партнеры",
+        "Площадки",
+        "Вопросы или предложения",
+    ],
+    "Общие ресурсы приложений": [
+        "Люди",
+    ],
+    "Пользователи": [
+        "Пользователи",
+    ],
+}
+SPECTACULAR_SETTINGS = {
+    "ENUM_NAME_OVERRIDES": {
+        "event_type": "apps.afisha.models.Event.EventType",
+        "partner_type": "apps.info.models.people.Partner.PartnerType"
     }
 }

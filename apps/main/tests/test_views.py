@@ -78,16 +78,16 @@ class TestMainAPIViews:
                 field in response.data["video_archive"]
             ), f"Проверьте, что при GET запросе {MAIN_URL} data[video_archive] содержит items"
 
-    def test_news_count_in_response_matches_count_in_db(self, client, news):
+    def test_news_count_in_response_matches_count_in_db(self, client, news_items_with_content):
         """Checks that count news in response matches count in db."""
         response = client.get(MAIN_URL)
         objects_count_in_response = len(response.data["news"]["items"])
-        objects_count_in_db = len(news)
+        objects_count_in_db = len(news_items_with_content)
         assert (
             objects_count_in_db == objects_count_in_response
         ), f"Проверьте, что при GET запросе {MAIN_URL} возвращаются все объекты"
 
-    def test_get_main_news_items_fields(self, client, news):
+    def test_get_main_news_items_fields(self, client, news_items_with_content):
         """Checks data["news"]["items"] in response."""
         fields = ["id", "title", "description", "image", "pub_date"]
         response = client.get(MAIN_URL)
@@ -118,7 +118,7 @@ class TestMainAPIViews:
         """Checks that count play in short list in response matches count in db."""
         response = client.get(MAIN_URL)
         objects_count_in_response = len(response.data["short_list"]["items"])
-        objects_count_in_db = Play.objects.filter(is_draft=False, program__slug="short-list").count()
+        objects_count_in_db = Play.objects.filter(published=True, program__slug="short-list").count()
         assert (
             objects_count_in_db == objects_count_in_response
         ), f"Проверьте, что при GET запросе {MAIN_URL} возвращаются все объекты"
@@ -174,8 +174,8 @@ class TestMainAPIViews:
     def test_get_main_afisha_items_fields(
         self,
         client,
-        news,
-        events,
+        news_items_with_content,
+        events_pinned_on_main,
         banners,
         places,
     ):
@@ -190,8 +190,8 @@ class TestMainAPIViews:
     def test_get_main_afisha_items_event_body_fields(
         self,
         client,
-        news,
-        events,
+        news_items_with_content,
+        events_pinned_on_main,
     ):
         """Checks data["afisha"]["items"]["event_body"] in response."""
         fields = ["id", "name", "description", "team", "project_title"]
@@ -201,42 +201,42 @@ class TestMainAPIViews:
                 field in response.data["afisha"]["items"][0]["event_body"]
             ), f"Проверьте, что при GET запросе {MAIN_URL} data[afisha][items][0][event_body] содержит {field}"
 
-    def test_get_main_afisha_items_event_body_team_fields(
-        self,
-        client,
-        news,
-        events,
-    ):
-        """Checks data["afisha"]["items"]["event_body"]["team"] in response."""
-        fields = [
+    def test_get_main_afisha_items_event_body_team_fields(self, client, news_items_with_content, events_pinned_on_main):
+        """Get `team` in response (response -> afisha -> items -> event_body -> team) and look for expected fields."""
+        expected_fields_set = {
             "name",
             "persons",
-        ]
-        response = client.get(MAIN_URL)
-        for field in fields:
-            assert field in response.data["afisha"]["items"][0]["event_body"]["team"][0], (
-                f"Проверьте, что при GET запросе {MAIN_URL} data[afisha]["
-                f"items][0][event_body][team] содержит {field}"
-            )
+        }
+
+        response_data = client.get(MAIN_URL).data
+        afisha_attr = response_data.get("afisha")
+        events_in_afisha = afisha_attr.get("items")
+
+        assert len(events_in_afisha) > 0, "В блоке `afisha` -> `items` должны быть объекты."
+
+        first_event_in_afisha = events_in_afisha[0]
+        event_body = first_event_in_afisha.get("event_body")
+        team_in_event_body = event_body.get("team")
+
+        assert len(team_in_event_body) > 0, f"Блок `team` у {event_body} ожидался непустым"
+
+        first_team_member = team_in_event_body[0]
+        team_keys_set = set(first_team_member.keys())
+        assert expected_fields_set.issubset(team_keys_set)
 
     def test_afisha_items_count_in_response_matches_count_in_db(
         self,
         client,
-        news,
-        blog,
-        plays,
-        events,
-        person,
-        reading,
-        performance,
-        master_class,
+        news_items_with_content,
+        blog_items_with_content,
+        events_pinned_on_main,
     ):
         """Checks that count afisha items in response matches count in db."""
-        response = client.get(MAIN_URL)
-        objects_count_in_response = len(response.data["afisha"]["items"])
         today = timezone.now()
         tomorrow = today.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
         objects_count_in_db = Event.objects.filter(date_time__range=(today, tomorrow), pinned_on_main=True).count()
-        assert (
-            objects_count_in_db == objects_count_in_response
-        ), f"Проверьте, что при GET запросе {MAIN_URL} возвращаются все объекты"
+
+        response = client.get(MAIN_URL)
+        objects_count_in_response = len(response.data["afisha"]["items"])
+
+        assert objects_count_in_db == objects_count_in_response, "В блоке афига неожидаемое количество объектов."
